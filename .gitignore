@@ -1,0 +1,17 @@
+.env
+
+# Go
+*.test
+coverage.out
+
+# Frontend
+web/node_modules/
+web/dist/
+web/.vite/
+web/.coverage/
+web/node_modules/.tmp/
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/

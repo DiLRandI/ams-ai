@@ -1,0 +1,273 @@
+openapi: 3.0.3
+info:
+  title: AMS MVP API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+paths:
+  /healthz:
+    get:
+      security: []
+      responses:
+        "200":
+          description: Health response
+  /api/auth/login:
+    post:
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login token and user
+  /api/auth/me:
+    get:
+      responses:
+        "200":
+          description: Current user
+  /api/categories:
+    get:
+      responses:
+        "200":
+          description: Category list
+    post:
+      responses:
+        "201":
+          description: Created category
+  /api/categories/{id}:
+    put:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Updated category
+  /api/assets:
+    get:
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: categoryId
+          in: query
+          schema: { type: integer }
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: warrantyState
+          in: query
+          schema: { type: string, enum: [active, expiring_soon, expired, not_set] }
+        - name: hasDocuments
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Asset list
+    post:
+      responses:
+        "201":
+          description: Created asset
+  /api/assets/{id}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Asset detail
+    put:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Updated asset
+  /api/assets/{id}/archive:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Archived
+  /api/assets/{id}/restore:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Restored
+  /api/assets/{id}/documents:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Document list
+    post:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, type]
+              properties:
+                title: { type: string }
+                type: { type: string }
+                notes: { type: string }
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Uploaded document
+  /api/documents/{id}/download:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Document file stream
+  /api/documents/{id}:
+    delete:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Deleted document
+  /api/assets/{id}/vehicle:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Vehicle profile
+    put:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Saved vehicle profile
+  /api/assets/{id}/vehicle/insurance:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Insurance records
+    post:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "201":
+          description: Created insurance record
+  /api/assets/{id}/vehicle/licenses:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: License records
+    post:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "201":
+          description: Created license record
+  /api/assets/{id}/vehicle/emissions:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Emission records
+    post:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "201":
+          description: Created emission record
+  /api/assets/{id}/services:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Service records
+    post:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "201":
+          description: Created service record
+  /api/assets/{id}/fuel-logs:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Fuel logs
+    post:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "201":
+          description: Created fuel log
+  /api/dashboard:
+    get:
+      responses:
+        "200":
+          description: Dashboard summary
+  /api/reminders:
+    get:
+      responses:
+        "200":
+          description: In-app reminders
+  /api/reports/assets.csv:
+    get:
+      responses:
+        "200":
+          description: Asset CSV
+  /api/reports/warranties.csv:
+    get:
+      responses:
+        "200":
+          description: Warranty CSV
+  /api/reports/vehicle-renewals.csv:
+    get:
+      responses:
+        "200":
+          description: Vehicle renewal CSV
+  /api/reports/service-history.csv:
+    get:
+      responses:
+        "200":
+          description: Service history CSV
+  /api/reports/fuel-logs.csv:
+    get:
+      responses:
+        "200":
+          description: Fuel logs CSV
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
