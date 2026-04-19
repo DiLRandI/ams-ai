@@ -1,13 +1,13 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
-import { AppLayout } from './AppLayout';
-import { LoginPage } from '../features/auth/LoginPage';
-import { DashboardPage } from '../features/dashboard/DashboardPage';
-import { AssetDetailPage } from '../features/assets/AssetDetailPage';
-import { AssetFormPage } from '../features/assets/AssetFormPage';
-import { AssetsPage } from '../features/assets/AssetsPage';
-import { RemindersPage } from '../features/reminders/RemindersPage';
-import { ReportsPage } from '../features/reports/ReportsPage';
-import { ProtectedRoute } from '../features/auth/ProtectedRoute';
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AppLayout } from "./AppLayout";
+import { LoginPage } from "../features/auth/LoginPage";
+import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { AssetDetailPage } from "../features/assets/AssetDetailPage";
+import { AssetFormPage } from "../features/assets/AssetFormPage";
+import { AssetsPage } from "../features/assets/AssetsPage";
+import { RemindersPage } from "../features/reminders/RemindersPage";
+import { ReportsPage } from "../features/reports/ReportsPage";
+import { ProtectedRoute } from "../features/auth/ProtectedRoute";
 
 export function App() {
   return (

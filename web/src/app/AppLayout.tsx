@@ -1,6 +1,13 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { BarChart3, Bell, FileDown, LayoutDashboard, LogOut, Package } from 'lucide-react';
-import { useAuth } from '../features/auth/AuthContext';
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  BarChart3,
+  Bell,
+  FileDown,
+  LayoutDashboard,
+  LogOut,
+  Package,
+} from "lucide-react";
+import { useAuth } from "../features/auth/AuthContext";
 
 export function AppLayout() {
   const { user, logout } = useAuth();
@@ -41,7 +48,7 @@ export function AppLayout() {
             title="Log out"
             onClick={() => {
               logout();
-              navigate('/login');
+              navigate("/login");
             }}
           >
             <LogOut size={18} />

@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 export function PageHeader({
   title,
   eyebrow,
-  actions
+  actions,
 }: {
   title: string;
   eyebrow?: string;

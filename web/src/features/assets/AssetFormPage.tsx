@@ -1,27 +1,33 @@
-import { useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type Resolver, useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { z } from 'zod';
-import { api } from '../../api/client';
-import { PageHeader } from '../../components/PageHeader';
-import { Loading } from '../../components/Loading';
-import { dateOnly } from './format';
+import { useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type Resolver, useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { z } from "zod";
+import { api } from "../../api/client";
+import { PageHeader } from "../../components/PageHeader";
+import { Loading } from "../../components/Loading";
+import { dateOnly } from "./format";
 
-const optionalMoney = z.preprocess((value) => (value === '' || Number.isNaN(value) ? undefined : value), z.coerce.number().nonnegative().optional());
-const optionalID = z.preprocess((value) => (value === '' || Number.isNaN(value) ? undefined : value), z.coerce.number().int().positive().optional());
+const optionalMoney = z.preprocess(
+  (value) => (value === "" || Number.isNaN(value) ? undefined : value),
+  z.coerce.number().nonnegative().optional(),
+);
+const optionalID = z.preprocess(
+  (value) => (value === "" || Number.isNaN(value) ? undefined : value),
+  z.coerce.number().int().positive().optional(),
+);
 
 const schema = z.object({
-  type: z.enum(['general', 'vehicle']),
-  categoryId: z.coerce.number().min(1, 'Category is required'),
-  name: z.string().min(1, 'Asset name is required'),
+  type: z.enum(["general", "vehicle"]),
+  categoryId: z.coerce.number().min(1, "Category is required"),
+  name: z.string().min(1, "Asset name is required"),
   brand: z.string().optional(),
   model: z.string().optional(),
   serialNumber: z.string().optional(),
   purchaseDate: z.string().optional(),
   purchasePrice: optionalMoney,
-  status: z.enum(['active', 'in_repair', 'stored', 'retired', 'disposed']),
+  status: z.enum(["active", "in_repair", "stored", "retired", "disposed"]),
   condition: z.string().optional(),
   location: z.string().optional(),
   assignedTo: z.string().optional(),
@@ -29,7 +35,7 @@ const schema = z.object({
   notes: z.string().optional(),
   warrantyStartDate: z.string().optional(),
   warrantyExpiryDate: z.string().optional(),
-  warrantyNotes: z.string().optional()
+  warrantyNotes: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -39,12 +45,18 @@ export function AssetFormPage() {
   const assetId = params.id ? Number(params.id) : null;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: api.categories });
-  const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: api.users });
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: api.categories,
+  });
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: api.users,
+  });
   const { data: asset, isLoading } = useQuery({
-    queryKey: ['asset', assetId],
+    queryKey: ["asset", assetId],
     queryFn: () => api.asset(assetId!),
-    enabled: Boolean(assetId)
+    enabled: Boolean(assetId),
   });
 
   const {
@@ -52,17 +64,17 @@ export function AssetFormPage() {
     handleSubmit,
     reset,
     control,
-    formState: { errors }
+    formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema) as unknown as Resolver<FormValues>,
     defaultValues: {
-      type: 'general',
-      status: 'active',
+      type: "general",
+      status: "active",
       categoryId: 0,
-      name: ''
-    }
+      name: "",
+    },
   });
-  const assetType = useWatch({ control, name: 'type' });
+  const assetType = useWatch({ control, name: "type" });
 
   useEffect(() => {
     if (asset) {
@@ -83,7 +95,7 @@ export function AssetFormPage() {
         notes: asset.notes,
         warrantyStartDate: dateOnly(asset.warrantyStartDate),
         warrantyExpiryDate: dateOnly(asset.warrantyExpiryDate),
-        warrantyNotes: asset.warrantyNotes
+        warrantyNotes: asset.warrantyNotes,
       });
     }
   }, [asset, reset]);
@@ -91,13 +103,15 @@ export function AssetFormPage() {
   const mutation = useMutation({
     mutationFn: (values: FormValues) => {
       const payload = normalize(values);
-      return assetId ? api.updateAsset(assetId, payload) : api.createAsset(payload);
+      return assetId
+        ? api.updateAsset(assetId, payload)
+        : api.createAsset(payload);
     },
     onSuccess: async (saved) => {
-      await queryClient.invalidateQueries({ queryKey: ['assets'] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      await queryClient.invalidateQueries({ queryKey: ["assets"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       navigate(`/assets/${saved.id}`);
-    }
+    },
   });
 
   if (assetId && isLoading) return <Loading />;
@@ -105,21 +119,31 @@ export function AssetFormPage() {
   return (
     <>
       <PageHeader
-        title={assetId ? 'Edit asset' : 'Add asset'}
-        eyebrow={assetId ? asset?.code : 'Create an MVP asset record'}
-        actions={<Link className="secondaryButton" to={assetId ? `/assets/${assetId}` : '/assets'}>Cancel</Link>}
+        title={assetId ? "Edit asset" : "Add asset"}
+        eyebrow={assetId ? asset?.code : "Create an MVP asset record"}
+        actions={
+          <Link
+            className="secondaryButton"
+            to={assetId ? `/assets/${assetId}` : "/assets"}
+          >
+            Cancel
+          </Link>
+        }
       />
-      <form className="panel formGrid" onSubmit={handleSubmit((values) => mutation.mutate(values))}>
+      <form
+        className="panel formGrid"
+        onSubmit={handleSubmit((values) => mutation.mutate(values))}
+      >
         <label>
           Asset type
-          <select {...register('type')}>
+          <select {...register("type")}>
             <option value="general">General physical asset</option>
             <option value="vehicle">Vehicle asset</option>
           </select>
         </label>
         <label>
           Category
-          <select {...register('categoryId')}>
+          <select {...register("categoryId")}>
             <option value={0}>Select category</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -127,16 +151,20 @@ export function AssetFormPage() {
               </option>
             ))}
           </select>
-          {errors.categoryId && <span className="fieldError">{errors.categoryId.message}</span>}
+          {errors.categoryId && (
+            <span className="fieldError">{errors.categoryId.message}</span>
+          )}
         </label>
         <label>
           Asset name
-          <input {...register('name')} />
-          {errors.name && <span className="fieldError">{errors.name.message}</span>}
+          <input {...register("name")} />
+          {errors.name && (
+            <span className="fieldError">{errors.name.message}</span>
+          )}
         </label>
         <label>
           Status
-          <select {...register('status')}>
+          <select {...register("status")}>
             <option value="active">Active</option>
             <option value="in_repair">In repair</option>
             <option value="stored">Stored</option>
@@ -146,39 +174,39 @@ export function AssetFormPage() {
         </label>
         <label>
           Brand
-          <input {...register('brand')} />
+          <input {...register("brand")} />
         </label>
         <label>
           Model
-          <input {...register('model')} />
+          <input {...register("model")} />
         </label>
         <label>
           Serial number / VIN
-          <input {...register('serialNumber')} />
+          <input {...register("serialNumber")} />
         </label>
         <label>
           Condition
-          <input {...register('condition')} />
+          <input {...register("condition")} />
         </label>
         <label>
           Purchase date
-          <input type="date" {...register('purchaseDate')} />
+          <input type="date" {...register("purchaseDate")} />
         </label>
         <label>
           Purchase price
-          <input type="number" step="0.01" {...register('purchasePrice')} />
+          <input type="number" step="0.01" {...register("purchasePrice")} />
         </label>
         <label>
           Location
-          <input {...register('location')} />
+          <input {...register("location")} />
         </label>
         <label>
           Assigned person
-          <input {...register('assignedTo')} />
+          <input {...register("assignedTo")} />
         </label>
         <label>
           Assigned app user
-          <select {...register('assignedUserId')}>
+          <select {...register("assignedUserId")}>
             <option value="">None</option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
@@ -189,27 +217,41 @@ export function AssetFormPage() {
         </label>
         <label>
           Warranty start
-          <input type="date" {...register('warrantyStartDate')} />
+          <input type="date" {...register("warrantyStartDate")} />
         </label>
         <label>
           Warranty expiry
-          <input type="date" {...register('warrantyExpiryDate')} />
+          <input type="date" {...register("warrantyExpiryDate")} />
         </label>
         <label className="wide">
           Warranty notes
-          <textarea rows={3} {...register('warrantyNotes')} />
+          <textarea rows={3} {...register("warrantyNotes")} />
         </label>
         <label className="wide">
           Notes
-          <textarea rows={4} {...register('notes')} />
+          <textarea rows={4} {...register("notes")} />
         </label>
-        {assetType === 'vehicle' && (
-          <div className="wide callout">Vehicle-specific registration, insurance, license, emission, service, and fuel details are managed on the asset detail page after saving.</div>
+        {assetType === "vehicle" && (
+          <div className="wide callout">
+            Vehicle-specific registration, insurance, license, emission,
+            service, and fuel details are managed on the asset detail page after
+            saving.
+          </div>
         )}
-        {mutation.error && <div className="alert wide">{mutation.error instanceof Error ? mutation.error.message : 'Save failed'}</div>}
+        {mutation.error && (
+          <div className="alert wide">
+            {mutation.error instanceof Error
+              ? mutation.error.message
+              : "Save failed"}
+          </div>
+        )}
         <div className="formActions wide">
-          <button className="primaryButton" disabled={mutation.isPending} type="submit">
-            {mutation.isPending ? 'Saving...' : 'Save asset'}
+          <button
+            className="primaryButton"
+            disabled={mutation.isPending}
+            type="submit"
+          >
+            {mutation.isPending ? "Saving..." : "Save asset"}
           </button>
         </div>
       </form>
@@ -220,18 +262,18 @@ export function AssetFormPage() {
 function normalize(values: FormValues) {
   return {
     ...values,
-    brand: values.brand ?? '',
-    model: values.model ?? '',
-    serialNumber: values.serialNumber ?? '',
-    purchaseDate: values.purchaseDate || '',
+    brand: values.brand ?? "",
+    model: values.model ?? "",
+    serialNumber: values.serialNumber ?? "",
+    purchaseDate: values.purchaseDate || "",
     purchasePrice: values.purchasePrice,
-    condition: values.condition ?? '',
-    location: values.location ?? '',
-    assignedTo: values.assignedTo ?? '',
+    condition: values.condition ?? "",
+    location: values.location ?? "",
+    assignedTo: values.assignedTo ?? "",
     assignedUserId: values.assignedUserId,
-    notes: values.notes ?? '',
-    warrantyStartDate: values.warrantyStartDate || '',
-    warrantyExpiryDate: values.warrantyExpiryDate || '',
-    warrantyNotes: values.warrantyNotes ?? ''
+    notes: values.notes ?? "",
+    warrantyStartDate: values.warrantyStartDate || "",
+    warrantyExpiryDate: values.warrantyExpiryDate || "",
+    warrantyNotes: values.warrantyNotes ?? "",
   };
 }

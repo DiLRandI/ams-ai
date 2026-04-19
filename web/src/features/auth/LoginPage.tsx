@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { z } from 'zod';
-import { useAuth } from './AuthContext';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { useAuth } from "./AuthContext";
 
 const schema = z.object({
   email: z.string().email(),
-  password: z.string().min(1)
+  password: z.string().min(1),
 });
 
 type LoginForm = z.infer<typeof schema>;
@@ -16,14 +16,14 @@ export function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
     resolver: zodResolver(schema),
-    defaultValues: { email: 'admin@example.com', password: 'admin123' }
+    defaultValues: { email: "admin@example.com", password: "admin123" },
   });
 
   if (user) {
@@ -39,32 +39,49 @@ export function LoginPage() {
         </div>
         <form
           onSubmit={handleSubmit(async (values) => {
-            setError('');
+            setError("");
             try {
               await login(values.email, values.password);
-              const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
-              navigate(from ?? '/dashboard', { replace: true });
+              const from = (
+                location.state as { from?: { pathname?: string } } | null
+              )?.from?.pathname;
+              navigate(from ?? "/dashboard", { replace: true });
             } catch (err) {
-              setError(err instanceof Error ? err.message : 'Login failed');
+              setError(err instanceof Error ? err.message : "Login failed");
             }
           })}
         >
           <label>
             Email
-            <input autoComplete="email" {...register('email')} />
-            {errors.email && <span className="fieldError">{errors.email.message}</span>}
+            <input autoComplete="email" {...register("email")} />
+            {errors.email && (
+              <span className="fieldError">{errors.email.message}</span>
+            )}
           </label>
           <label>
             Password
-            <input type="password" autoComplete="current-password" {...register('password')} />
-            {errors.password && <span className="fieldError">{errors.password.message}</span>}
+            <input
+              type="password"
+              autoComplete="current-password"
+              {...register("password")}
+            />
+            {errors.password && (
+              <span className="fieldError">{errors.password.message}</span>
+            )}
           </label>
           {error && <div className="alert">{error}</div>}
-          <button className="primaryButton" disabled={isSubmitting} type="submit">
-            {isSubmitting ? 'Signing in...' : 'Sign in'}
+          <button
+            className="primaryButton"
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
         </form>
-        <p className="muted">Demo credentials: admin@example.com / admin123 or user@example.com / user123</p>
+        <p className="muted">
+          Demo credentials: admin@example.com / admin123 or user@example.com /
+          user123
+        </p>
       </section>
     </main>
   );

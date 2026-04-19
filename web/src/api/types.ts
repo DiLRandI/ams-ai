@@ -1,7 +1,12 @@
-export type Role = 'admin' | 'user';
-export type AssetType = 'general' | 'vehicle';
-export type AssetStatus = 'active' | 'in_repair' | 'stored' | 'retired' | 'disposed';
-export type WarrantyState = 'active' | 'expiring_soon' | 'expired' | 'not_set';
+export type Role = "admin" | "user";
+export type AssetType = "general" | "vehicle";
+export type AssetStatus =
+  | "active"
+  | "in_repair"
+  | "stored"
+  | "retired"
+  | "disposed";
+export type WarrantyState = "active" | "expiring_soon" | "expired" | "not_set";
 
 export interface User {
   id: number;
@@ -98,7 +103,7 @@ export interface VehicleEmissionRecord {
 export interface ServiceRecord {
   id: number;
   assetId: number;
-  serviceType: 'service' | 'repair';
+  serviceType: "service" | "repair";
   serviceDate: string;
   cost?: number;
   vendor: string;
@@ -142,12 +147,16 @@ export interface Reminder {
   sourceId: number;
   title: string;
   dueDate: string;
-  state: 'upcoming' | 'due' | 'overdue';
+  state: "upcoming" | "due" | "overdue";
 }
 
 export interface Dashboard {
   totalAssets: number;
-  assetsByCategory: Array<{ categoryId: number; categoryName: string; count: number }>;
+  assetsByCategory: Array<{
+    categoryId: number;
+    categoryName: string;
+    count: number;
+  }>;
   expiringWarranties: Asset[];
   expiringVehicleInsurance: Reminder[];
   expiringVehicleLicenses: Reminder[];

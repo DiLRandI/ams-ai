@@ -840,7 +840,13 @@ func (s *Store) RegenerateReminders(ctx context.Context, windowDays int) error {
 		 SELECT a.id, 'service', -vp.asset_id, a.name || ' service due', vp.next_service_date,
 		 CASE WHEN vp.next_service_date < current_date THEN 'overdue' WHEN vp.next_service_date = current_date THEN 'due' ELSE 'upcoming' END
 		 FROM vehicle_profiles vp JOIN assets a ON a.id = vp.asset_id
-		 WHERE a.archived_at IS NULL AND vp.next_service_date IS NOT NULL AND vp.next_service_date <= current_date + ($1::int * interval '1 day')`,
+		 WHERE a.archived_at IS NULL
+		   AND vp.next_service_date IS NOT NULL
+		   AND vp.next_service_date <= current_date + ($1::int * interval '1 day')
+		   AND NOT EXISTS (
+		   	SELECT 1 FROM service_records sr
+		   	WHERE sr.asset_id = vp.asset_id AND sr.next_service_date IS NOT NULL
+		   )`,
 	} {
 		if _, err := tx.Exec(ctx, q, windowDays); err != nil {
 			return err
@@ -883,6 +889,9 @@ func (s *Store) ListReminders(ctx context.Context, user domain.User, limit int) 
 }
 
 func takeAssets(in []domain.Asset, n int) []domain.Asset {
+	if in == nil {
+		return []domain.Asset{}
+	}
 	if len(in) <= n {
 		return in
 	}
@@ -890,6 +899,9 @@ func takeAssets(in []domain.Asset, n int) []domain.Asset {
 }
 
 func takeReminders(in []domain.Reminder, n int) []domain.Reminder {
+	if in == nil {
+		return []domain.Reminder{}
+	}
 	if len(in) <= n {
 		return in
 	}

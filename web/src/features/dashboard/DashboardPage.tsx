@@ -1,18 +1,30 @@
-import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Bell, Car, Clock, Package, ShieldCheck, Wrench } from 'lucide-react';
-import { api } from '../../api/client';
-import { PageHeader } from '../../components/PageHeader';
-import { EmptyState } from '../../components/EmptyState';
-import { Loading } from '../../components/Loading';
-import { WarrantyBadge, ReminderBadge, StatusBadge } from '../../components/StateBadge';
-import { dateOnly } from '../assets/format';
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Bell, Car, Clock, Package, ShieldCheck, Wrench } from "lucide-react";
+import { api } from "../../api/client";
+import { PageHeader } from "../../components/PageHeader";
+import { EmptyState } from "../../components/EmptyState";
+import { Loading } from "../../components/Loading";
+import {
+  WarrantyBadge,
+  ReminderBadge,
+  StatusBadge,
+} from "../../components/StateBadge";
+import { dateOnly } from "../assets/format";
 
 export function DashboardPage() {
-  const { data, isLoading, error } = useQuery({ queryKey: ['dashboard'], queryFn: api.dashboard });
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: api.dashboard,
+  });
 
   if (isLoading) return <Loading />;
-  if (error) return <div className="alert">{error instanceof Error ? error.message : 'Dashboard failed'}</div>;
+  if (error)
+    return (
+      <div className="alert">
+        {error instanceof Error ? error.message : "Dashboard failed"}
+      </div>
+    );
   if (!data) return null;
 
   return (
@@ -31,7 +43,10 @@ export function DashboardPage() {
         </div>
         <div className="metric">
           <Car size={22} />
-          <strong>{data.expiringVehicleInsurance.length + data.expiringVehicleLicenses.length}</strong>
+          <strong>
+            {data.expiringVehicleInsurance.length +
+              data.expiringVehicleLicenses.length}
+          </strong>
           <span>Vehicle renewals</span>
         </div>
         <div className="metric">
@@ -78,7 +93,10 @@ export function DashboardPage() {
         <div className="panel">
           <h2>Recently added</h2>
           {data.recentlyAddedAssets.length === 0 ? (
-            <EmptyState title="No assets yet" body="Create the first asset from the assets screen." />
+            <EmptyState
+              title="No assets yet"
+              body="Create the first asset from the assets screen."
+            />
           ) : (
             <ul className="compactList">
               {data.recentlyAddedAssets.slice(0, 6).map((asset) => (

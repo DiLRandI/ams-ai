@@ -1,11 +1,14 @@
 export function dateOnly(value?: string | null) {
-  if (!value) return '';
+  if (!value) return "";
   return value.slice(0, 10);
 }
 
 export function money(value?: number | null) {
-  if (value === undefined || value === null) return '';
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(value);
+  if (value === undefined || value === null) return "";
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
 }
 
 export function bytes(value: number) {

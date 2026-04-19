@@ -1,35 +1,40 @@
-import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Plus, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { api } from '../../api/client';
-import { PageHeader } from '../../components/PageHeader';
-import { EmptyState } from '../../components/EmptyState';
-import { Loading } from '../../components/Loading';
-import { StatusBadge, WarrantyBadge } from '../../components/StateBadge';
-import { dateOnly } from './format';
+import { Link } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Search } from "lucide-react";
+import { FormEvent, useMemo, useState } from "react";
+import { api } from "../../api/client";
+import { PageHeader } from "../../components/PageHeader";
+import { EmptyState } from "../../components/EmptyState";
+import { Loading } from "../../components/Loading";
+import { StatusBadge, WarrantyBadge } from "../../components/StateBadge";
+import { dateOnly } from "./format";
+import { useAuth } from "../auth/AuthContext";
 
 export function AssetsPage() {
-  const [q, setQ] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [status, setStatus] = useState('');
-  const [warrantyState, setWarrantyState] = useState('');
-  const [hasDocuments, setHasDocuments] = useState('');
-  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: api.categories });
+  const [q, setQ] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [status, setStatus] = useState("");
+  const [warrantyState, setWarrantyState] = useState("");
+  const [hasDocuments, setHasDocuments] = useState("");
+  const { user } = useAuth();
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: api.categories,
+  });
 
   const params = useMemo(() => {
     const next = new URLSearchParams();
-    if (q) next.set('q', q);
-    if (categoryId) next.set('categoryId', categoryId);
-    if (status) next.set('status', status);
-    if (warrantyState) next.set('warrantyState', warrantyState);
-    if (hasDocuments) next.set('hasDocuments', hasDocuments);
+    if (q) next.set("q", q);
+    if (categoryId) next.set("categoryId", categoryId);
+    if (status) next.set("status", status);
+    if (warrantyState) next.set("warrantyState", warrantyState);
+    if (hasDocuments) next.set("hasDocuments", hasDocuments);
     return next;
   }, [categoryId, hasDocuments, q, status, warrantyState]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['assets', params.toString()],
-    queryFn: () => api.assets(params)
+    queryKey: ["assets", params.toString()],
+    queryFn: () => api.assets(params),
   });
 
   return (
@@ -46,9 +51,17 @@ export function AssetsPage() {
       <section className="filterBar">
         <label className="searchBox">
           <Search size={18} />
-          <input placeholder="Search name, model, serial, registration..." value={q} onChange={(event) => setQ(event.target.value)} />
+          <input
+            placeholder="Search name, model, serial, registration..."
+            value={q}
+            onChange={(event) => setQ(event.target.value)}
+          />
         </label>
-        <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} aria-label="Category">
+        <select
+          value={categoryId}
+          onChange={(event) => setCategoryId(event.target.value)}
+          aria-label="Category"
+        >
           <option value="">All categories</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
@@ -56,7 +69,11 @@ export function AssetsPage() {
             </option>
           ))}
         </select>
-        <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Status">
+        <select
+          value={status}
+          onChange={(event) => setStatus(event.target.value)}
+          aria-label="Status"
+        >
           <option value="">All statuses</option>
           <option value="active">Active</option>
           <option value="in_repair">In repair</option>
@@ -64,14 +81,22 @@ export function AssetsPage() {
           <option value="retired">Retired</option>
           <option value="disposed">Disposed</option>
         </select>
-        <select value={warrantyState} onChange={(event) => setWarrantyState(event.target.value)} aria-label="Warranty state">
+        <select
+          value={warrantyState}
+          onChange={(event) => setWarrantyState(event.target.value)}
+          aria-label="Warranty state"
+        >
           <option value="">All warranties</option>
           <option value="active">Active</option>
           <option value="expiring_soon">Expiring soon</option>
           <option value="expired">Expired</option>
           <option value="not_set">Not set</option>
         </select>
-        <select value={hasDocuments} onChange={(event) => setHasDocuments(event.target.value)} aria-label="Documents">
+        <select
+          value={hasDocuments}
+          onChange={(event) => setHasDocuments(event.target.value)}
+          aria-label="Documents"
+        >
           <option value="">Any documents</option>
           <option value="true">Has documents</option>
           <option value="false">No documents</option>
@@ -79,8 +104,17 @@ export function AssetsPage() {
       </section>
       <section className="panel">
         {isLoading && <Loading />}
-        {error && <div className="alert">{error instanceof Error ? error.message : 'Could not load assets'}</div>}
-        {!isLoading && !data?.length && <EmptyState title="No assets found" body="Try clearing filters or add a new asset." />}
+        {error && (
+          <div className="alert">
+            {error instanceof Error ? error.message : "Could not load assets"}
+          </div>
+        )}
+        {!isLoading && !data?.length && (
+          <EmptyState
+            title="No assets found"
+            body="Try clearing filters or add a new asset."
+          />
+        )}
         {!!data?.length && (
           <div className="tableWrap">
             <table>
@@ -101,7 +135,7 @@ export function AssetsPage() {
                       <Link to={`/assets/${asset.id}`}>{asset.name}</Link>
                       <span className="tableSub">
                         {asset.code}
-                        {asset.type === 'vehicle' ? ' · Vehicle' : ''}
+                        {asset.type === "vehicle" ? " · Vehicle" : ""}
                       </span>
                     </td>
                     <td>{asset.categoryName}</td>
@@ -109,12 +143,20 @@ export function AssetsPage() {
                       <StatusBadge status={asset.status} />
                     </td>
                     <td>
-                      {asset.location || asset.assignedTo || 'Not set'}
-                      {asset.assignedUserName && <span className="tableSub">{asset.assignedUserName}</span>}
+                      {asset.location || asset.assignedTo || "Not set"}
+                      {asset.assignedUserName && (
+                        <span className="tableSub">
+                          {asset.assignedUserName}
+                        </span>
+                      )}
                     </td>
                     <td>
                       <WarrantyBadge state={asset.warrantyState} />
-                      {asset.warrantyExpiryDate && <span className="tableSub">{dateOnly(asset.warrantyExpiryDate)}</span>}
+                      {asset.warrantyExpiryDate && (
+                        <span className="tableSub">
+                          {dateOnly(asset.warrantyExpiryDate)}
+                        </span>
+                      )}
                     </td>
                     <td>{asset.documentCount ?? 0}</td>
                   </tr>
@@ -124,6 +166,72 @@ export function AssetsPage() {
           </div>
         )}
       </section>
+      {user?.role === "admin" && <CategoryManager />}
     </>
+  );
+}
+
+function CategoryManager() {
+  const queryClient = useQueryClient();
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: api.categories,
+  });
+  const create = useMutation({
+    mutationFn: (payload: { name: string; description: string }) =>
+      api.createCategory(payload),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["categories"] }),
+  });
+  const update = useMutation({
+    mutationFn: (payload: { id: number; name: string; description: string }) =>
+      api.updateCategory(payload.id, payload),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["categories"] }),
+  });
+
+  function createCategory(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    create.mutate({
+      name: String(form.get("name") ?? ""),
+      description: String(form.get("description") ?? ""),
+    });
+    event.currentTarget.reset();
+  }
+
+  return (
+    <section className="panel">
+      <h2>Category settings</h2>
+      <form className="recordForm single" onSubmit={createCategory}>
+        <input name="name" placeholder="New category name" required />
+        <input name="description" placeholder="Description" />
+        <button className="primaryButton" type="submit">
+          Add category
+        </button>
+      </form>
+      <div className="categoryEditor">
+        {categories.map((category) => (
+          <form
+            key={category.id}
+            onSubmit={(event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              update.mutate({
+                id: category.id,
+                name: String(form.get("name") ?? ""),
+                description: String(form.get("description") ?? ""),
+              });
+            }}
+          >
+            <input name="name" defaultValue={category.name} />
+            <input name="description" defaultValue={category.description} />
+            <button className="secondaryButton" type="submit">
+              Save
+            </button>
+          </form>
+        ))}
+      </div>
+    </section>
   );
 }
