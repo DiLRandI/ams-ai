@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -332,10 +333,10 @@ func (s *Service) UploadDocument(ctx context.Context, in UploadInput) (domain.As
 		return domain.AssetDocument{}, fmt.Errorf("%w: unsupported document type", domain.ErrInvalid)
 	}
 	if !validContentType(in.ContentType) {
-		return domain.AssetDocument{}, fmt.Errorf("%w: only JPG, PNG, and PDF files are supported", domain.ErrInvalid)
+		return domain.AssetDocument{}, fmt.Errorf("%w: unsupported file type; only JPG, PNG, and PDF files are supported", domain.ErrInvalid)
 	}
 	if in.SizeBytes <= 0 || in.SizeBytes > s.maxUpload {
-		return domain.AssetDocument{}, fmt.Errorf("%w: file size exceeds allowed limit", domain.ErrInvalid)
+		return domain.AssetDocument{}, fmt.Errorf("%w: file size must be greater than 0 bytes and no larger than %s", domain.ErrInvalid, formatByteLimit(s.maxUpload))
 	}
 	key := fmt.Sprintf("assets/%d/documents/%d/%s", in.AssetID, s.now().UnixNano(), safeFileName(in.FileName))
 	if err := s.objects.Put(ctx, key, in.Reader, in.SizeBytes, in.ContentType); err != nil {
@@ -473,6 +474,9 @@ func validDocumentType(t string) bool {
 }
 
 func validContentType(t string) bool {
+	if mediaType, _, err := mime.ParseMediaType(t); err == nil {
+		t = mediaType
+	}
 	switch t {
 	case "image/jpeg", "image/png", "application/pdf":
 		return true
@@ -497,7 +501,18 @@ func safeFileName(name string) string {
 			b.WriteByte('_')
 		}
 	}
-	return strings.Trim(b.String(), "._-")
+	out := strings.Trim(b.String(), "._-")
+	if out == "" {
+		return "upload"
+	}
+	return out
+}
+
+func formatByteLimit(limit int64) string {
+	if limit%(1024*1024) == 0 {
+		return fmt.Sprintf("%d MB", limit/(1024*1024))
+	}
+	return fmt.Sprintf("%d bytes", limit)
 }
 
 func (s *Service) signToken(userID int64, role string, expiresAt time.Time) (string, error) {

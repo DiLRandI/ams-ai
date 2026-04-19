@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"bytes"
 	"context"
 	"encoding/csv"
 	"encoding/json"
@@ -284,9 +285,10 @@ func (s *Server) uploadDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	contentType := header.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = mime.TypeByExtension(strings.ToLower(filepathExt(header.Filename)))
+	contentType, reader, err := detectUploadContentType(file, header.Filename)
+	if err != nil {
+		writeError(w, err)
+		return
 	}
 	doc, err := s.service.UploadDocument(r.Context(), service.UploadInput{
 		AssetID:     assetID,
@@ -296,7 +298,7 @@ func (s *Server) uploadDocument(w http.ResponseWriter, r *http.Request) {
 		FileName:    header.Filename,
 		ContentType: contentType,
 		SizeBytes:   header.Size,
-		Reader:      file,
+		Reader:      reader,
 		User:        currentUser(r),
 	})
 	if err != nil {
@@ -803,6 +805,23 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return "application/octet-stream"
+}
+
+func detectUploadContentType(file io.Reader, filename string) (string, io.Reader, error) {
+	sniff := make([]byte, 512)
+	n, err := file.Read(sniff)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return "", nil, fmt.Errorf("%w: could not read uploaded file", domain.ErrInvalid)
+	}
+	sniff = sniff[:n]
+	contentType := http.DetectContentType(sniff)
+	if contentType == "application/octet-stream" {
+		contentType = mime.TypeByExtension(strings.ToLower(filepathExt(filename)))
+	}
+	if mediaType, _, err := mime.ParseMediaType(contentType); err == nil {
+		contentType = mediaType
+	}
+	return contentType, io.MultiReader(bytes.NewReader(sniff), file), nil
 }
 
 func filepathExt(name string) string {

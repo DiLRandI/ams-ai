@@ -26,7 +26,7 @@ Main folders:
 
 Requirements:
 
-- Go 1.22 or newer
+- Go 1.26.2 or compatible newer Go version
 - Node.js 24 or compatible current LTS
 - Docker and Docker Compose
 
@@ -36,13 +36,36 @@ Create environment configuration:
 cp .env.example .env
 ```
 
-Start the full local stack, apply migrations, and seed demo data:
+Install frontend dependencies:
 
 ```sh
-make dev
+cd web && npm ci
 ```
 
-Open:
+Start infrastructure, apply migrations, seed demo data, and run the app on the host:
+
+```sh
+docker compose up -d postgres minio
+make migrate-up
+make seed
+make backend
+```
+
+In another terminal:
+
+```sh
+make frontend
+```
+
+Or start the full compose stack and then apply the database setup from the host:
+
+```sh
+make up
+make migrate-up
+make seed
+```
+
+Local URLs:
 
 - Frontend: http://localhost:5173
 - Backend health: http://localhost:8080/healthz
@@ -65,6 +88,9 @@ make frontend
 make test
 make lint
 make fmt
+make openapi-validate
+make e2e-install
+make e2e
 make migrate-up
 make migrate-down
 make seed
@@ -83,6 +109,16 @@ In another terminal:
 
 ```sh
 make frontend
+```
+
+Fresh local database reset:
+
+```sh
+make down
+docker volume rm ams-ai_postgres-data ams-ai_minio-data
+docker compose up -d postgres minio
+make migrate-up
+make seed
 ```
 
 ## MVP Scope Implemented
@@ -116,6 +152,7 @@ assets/{asset_id}/documents/{timestamp}/{safe_filename}
 ```
 
 Documents are downloaded through the backend so the MinIO bucket does not need public access.
+Direct unauthenticated document downloads return `401`; asset-level access rules are checked before downloads and deletes.
 
 Supported file types:
 
@@ -124,6 +161,17 @@ Supported file types:
 - PDF
 
 Default max upload size is 20 MB.
+The limit is configured with `MAX_UPLOAD_BYTES`. The backend sniffs uploaded file contents and only stores files whose detected MIME type is `image/jpeg`, `image/png`, or `application/pdf`.
+
+## API Contract
+
+The OpenAPI contract lives at `docs/openapi.yaml`.
+
+Validate the OpenAPI YAML and route coverage against the backend router:
+
+```sh
+make openapi-validate
+```
 
 ## Testing
 
@@ -140,3 +188,16 @@ Run lint checks:
 ```sh
 make lint
 ```
+
+Run the browser smoke test after PostgreSQL and MinIO are available:
+
+```sh
+make e2e-install
+make e2e
+```
+
+`make e2e` applies migrations, seeds demo data, starts the backend temporarily, starts the Vite dev server through Playwright, and verifies the core MVP happy path.
+
+## Release Checklist
+
+Use `docs/RELEASE_CHECKLIST.md` for the internal MVP release verification pass, including fresh clone setup, migrations, seed, smoke flows, document authorization, reports, backup notes, and known limitations.

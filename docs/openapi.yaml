@@ -37,6 +37,11 @@ paths:
       responses:
         "200":
           description: Current user
+  /api/users:
+    get:
+      responses:
+        "200":
+          description: Users visible to the current user. Admin users receive all users; standard users receive only their own profile.
   /api/categories:
     get:
       responses:
@@ -65,10 +70,19 @@ paths:
         - name: status
           in: query
           schema: { type: string }
+        - name: location
+          in: query
+          schema: { type: string }
+        - name: assignedUserId
+          in: query
+          schema: { type: integer }
         - name: warrantyState
           in: query
           schema: { type: string, enum: [active, expiring_soon, expired, not_set] }
         - name: hasDocuments
+          in: query
+          schema: { type: boolean }
+        - name: includeArchived
           in: query
           schema: { type: boolean }
       responses:
@@ -115,6 +129,7 @@ paths:
     post:
       parameters:
         - $ref: "#/components/parameters/id"
+      description: Uploads one private asset document. Files must be JPG, PNG, or PDF and must not exceed the configured MAX_UPLOAD_BYTES limit, 20 MB by default.
       requestBody:
         required: true
         content:
@@ -124,7 +139,9 @@ paths:
               required: [file, type]
               properties:
                 title: { type: string }
-                type: { type: string }
+                type:
+                  type: string
+                  enum: [bill_invoice, warranty, insurance, license_registration, service_receipt, manual, other]
                 notes: { type: string }
                 file:
                   type: string
@@ -234,6 +251,11 @@ paths:
       responses:
         "200":
           description: In-app reminders
+  /api/reminders/regenerate:
+    post:
+      responses:
+        "204":
+          description: Reminders regenerated. Admin only.
   /api/reports/assets.csv:
     get:
       responses:

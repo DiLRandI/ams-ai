@@ -77,7 +77,7 @@ func (s *Store) ListUsers(ctx context.Context) ([]domain.User, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var users []domain.User
+	users := []domain.User{}
 	for rows.Next() {
 		u, err := scanUser(rows)
 		if err != nil {
@@ -124,7 +124,7 @@ func (s *Store) ListCategories(ctx context.Context) ([]domain.Category, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []domain.Category
+	out := []domain.Category{}
 	for rows.Next() {
 		var c domain.Category
 		if err := rows.Scan(&c.ID, &c.Name, &c.Description, &c.IsSystem, &c.CreatedAt, &c.UpdatedAt); err != nil {
@@ -338,7 +338,7 @@ func (s *Store) ListAssets(ctx context.Context, f domain.AssetFilters) ([]domain
 		return nil, err
 	}
 	defer rows.Close()
-	var out []domain.Asset
+	out := []domain.Asset{}
 	for rows.Next() {
 		a, err := scanAsset(rows)
 		if err != nil {
@@ -463,7 +463,7 @@ func (s *Store) ListInsuranceRecords(ctx context.Context, assetID int64) ([]doma
 		return nil, err
 	}
 	defer rows.Close()
-	var out []domain.VehicleInsuranceRecord
+	out := []domain.VehicleInsuranceRecord{}
 	for rows.Next() {
 		r, err := scanInsurance(rows)
 		if err != nil {
@@ -500,7 +500,7 @@ func (s *Store) ListLicenseRecords(ctx context.Context, assetID int64) ([]domain
 		return nil, err
 	}
 	defer rows.Close()
-	var out []domain.VehicleLicenseRecord
+	out := []domain.VehicleLicenseRecord{}
 	for rows.Next() {
 		r, err := scanLicense(rows)
 		if err != nil {
@@ -537,7 +537,7 @@ func (s *Store) ListEmissionRecords(ctx context.Context, assetID int64) ([]domai
 		return nil, err
 	}
 	defer rows.Close()
-	var out []domain.VehicleEmissionRecord
+	out := []domain.VehicleEmissionRecord{}
 	for rows.Next() {
 		r, err := scanEmission(rows)
 		if err != nil {
@@ -580,7 +580,7 @@ func (s *Store) ListServiceRecords(ctx context.Context, assetID int64) ([]domain
 		return nil, err
 	}
 	defer rows.Close()
-	var out []domain.ServiceRecord
+	out := []domain.ServiceRecord{}
 	for rows.Next() {
 		r, err := scanService(rows)
 		if err != nil {
@@ -618,7 +618,7 @@ func (s *Store) ListFuelLogs(ctx context.Context, assetID int64) ([]domain.FuelL
 		return nil, err
 	}
 	defer rows.Close()
-	var out []domain.FuelLog
+	out := []domain.FuelLog{}
 	for rows.Next() {
 		r, err := scanFuel(rows)
 		if err != nil {
@@ -664,7 +664,7 @@ func (s *Store) ListDocuments(ctx context.Context, assetID int64) ([]domain.Asse
 		return nil, err
 	}
 	defer rows.Close()
-	var out []domain.AssetDocument
+	out := []domain.AssetDocument{}
 	for rows.Next() {
 		d, err := scanDocument(rows)
 		if err != nil {
@@ -774,7 +774,7 @@ func (s *Store) assetsByCategory(ctx context.Context, user domain.User) ([]domai
 		return nil, err
 	}
 	defer rows.Close()
-	var out []domain.CategoryCount
+	out := []domain.CategoryCount{}
 	for rows.Next() {
 		var c domain.CategoryCount
 		if err := rows.Scan(&c.CategoryID, &c.CategoryName, &c.Count); err != nil {
@@ -877,7 +877,7 @@ func (s *Store) ListReminders(ctx context.Context, user domain.User, limit int) 
 		return nil, err
 	}
 	defer rows.Close()
-	var out []domain.Reminder
+	out := []domain.Reminder{}
 	for rows.Next() {
 		var r domain.Reminder
 		if err := rows.Scan(&r.ID, &r.AssetID, &r.AssetCode, &r.AssetName, &r.SourceType, &r.SourceID, &r.Title, &r.DueDate, &r.State, &r.CreatedAt); err != nil {
