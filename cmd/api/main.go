@@ -12,9 +12,9 @@ import (
 
 	"ams-ai/internal/config"
 	"ams-ai/internal/httpapi"
-	"ams-ai/internal/repository/postgres"
+	"ams-ai/internal/platform/postgres"
+	"ams-ai/internal/platform/storage"
 	"ams-ai/internal/service"
-	"ams-ai/internal/storage"
 )
 
 func main() {

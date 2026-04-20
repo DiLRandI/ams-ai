@@ -18,8 +18,8 @@ import (
 
 	"ams-ai/internal/config"
 	"ams-ai/internal/domain"
-	"ams-ai/internal/repository/postgres"
-	"ams-ai/internal/storage"
+	"ams-ai/internal/platform/postgres"
+	"ams-ai/internal/platform/storage"
 
 	"golang.org/x/crypto/bcrypt"
 )
