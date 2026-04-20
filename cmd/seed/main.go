@@ -20,28 +20,34 @@ func main() {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	store, err := postgres.New(ctx, cfg.DatabaseURL)
+	db, err := postgres.New(ctx, cfg.DatabaseURL)
 	if err != nil {
 		exit(err)
 	}
-	defer store.Close()
+	defer db.Close()
 
-	if err := store.UpsertSeedUser(ctx, "admin@example.com", "admin123", "Demo Admin", domain.RoleAdmin); err != nil {
+	authRepo := postgres.NewAuthRepository(db)
+	categoryRepo := postgres.NewCategoryRepository(db)
+	assetRepo := postgres.NewAssetRepository(db, cfg.ReminderWindowDays)
+	vehicleRepo := postgres.NewVehicleRepository(db)
+	reminderRepo := postgres.NewReminderRepository(db)
+
+	if err := authRepo.UpsertSeedUser(ctx, "admin@example.com", "admin123", "Demo Admin", domain.RoleAdmin); err != nil {
 		exit(err)
 	}
-	if err := store.UpsertSeedUser(ctx, "user@example.com", "user123", "Demo User", domain.RoleUser); err != nil {
+	if err := authRepo.UpsertSeedUser(ctx, "user@example.com", "user123", "Demo User", domain.RoleUser); err != nil {
 		exit(err)
 	}
 
-	admin, err := store.GetUserByEmail(ctx, "admin@example.com")
+	admin, err := authRepo.GetUserByEmail(ctx, "admin@example.com")
 	if err != nil {
 		exit(err)
 	}
-	user, err := store.GetUserByEmail(ctx, "user@example.com")
+	user, err := authRepo.GetUserByEmail(ctx, "user@example.com")
 	if err != nil {
 		exit(err)
 	}
-	categories, err := store.ListCategories(ctx)
+	categories, err := categoryRepo.ListCategories(ctx)
 	if err != nil {
 		exit(err)
 	}
@@ -54,7 +60,7 @@ func main() {
 		return categories[0].ID
 	}
 
-	laptopID, err := ensureAsset(ctx, store, domain.Asset{
+	laptopID, err := ensureAsset(ctx, db, assetRepo, domain.Asset{
 		Type:               domain.AssetTypeGeneral,
 		CategoryID:         categoryID("IT devices"),
 		Name:               "Demo Laptop",
@@ -78,11 +84,11 @@ func main() {
 	if err != nil {
 		exit(err)
 	}
-	if err := ensureLaptopService(ctx, store, laptopID, admin.ID); err != nil {
+	if err := ensureLaptopService(ctx, db, vehicleRepo, laptopID, admin.ID); err != nil {
 		exit(err)
 	}
 
-	vehicleID, err := ensureAsset(ctx, store, domain.Asset{
+	vehicleID, err := ensureAsset(ctx, db, assetRepo, domain.Asset{
 		Type:               domain.AssetTypeVehicle,
 		CategoryID:         categoryID("Vehicles"),
 		Name:               "Demo Company Car",
@@ -105,7 +111,7 @@ func main() {
 	if err != nil {
 		exit(err)
 	}
-	if _, err := store.UpsertVehicleProfile(ctx, domain.VehicleProfile{
+	if _, err := vehicleRepo.UpsertVehicleProfile(ctx, domain.VehicleProfile{
 		AssetID:            vehicleID,
 		RegistrationNumber: "WP-CAB-1234",
 		VehicleType:        "Car",
@@ -119,41 +125,41 @@ func main() {
 	}); err != nil {
 		exit(err)
 	}
-	if err := ensureVehicleRecords(ctx, store, vehicleID, admin.ID); err != nil {
+	if err := ensureVehicleRecords(ctx, db, vehicleRepo, vehicleID, admin.ID); err != nil {
 		exit(err)
 	}
 
-	if err := store.RegenerateReminders(ctx, cfg.ReminderWindowDays); err != nil {
+	if err := reminderRepo.RegenerateReminders(ctx, cfg.ReminderWindowDays); err != nil {
 		exit(err)
 	}
 	fmt.Println("seed complete")
 }
 
-func ensureAsset(ctx context.Context, store *postgres.Store, a domain.Asset) (int64, error) {
+func ensureAsset(ctx context.Context, db *postgres.DB, assets *postgres.AssetRepository, a domain.Asset) (int64, error) {
 	var id int64
-	err := store.Pool().QueryRow(ctx, `SELECT id FROM assets WHERE name = $1 LIMIT 1`, a.Name).Scan(&id)
+	err := db.Pool().QueryRow(ctx, `SELECT id FROM assets WHERE name = $1 LIMIT 1`, a.Name).Scan(&id)
 	if err == nil {
 		return id, nil
 	}
 	if err != pgx.ErrNoRows {
 		return 0, err
 	}
-	created, err := store.CreateAsset(ctx, a)
+	created, err := assets.CreateAsset(ctx, a)
 	if err != nil {
 		return 0, err
 	}
 	return created.ID, nil
 }
 
-func ensureLaptopService(ctx context.Context, store *postgres.Store, assetID, userID int64) error {
+func ensureLaptopService(ctx context.Context, db *postgres.DB, vehicles *postgres.VehicleRepository, assetID, userID int64) error {
 	var count int
-	if err := store.Pool().QueryRow(ctx, `SELECT count(*) FROM service_records WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
+	if err := db.Pool().QueryRow(ctx, `SELECT count(*) FROM service_records WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
 		return err
 	}
 	if count > 0 {
 		return nil
 	}
-	_, err := store.CreateServiceRecord(ctx, domain.ServiceRecord{
+	_, err := vehicles.CreateServiceRecord(ctx, domain.ServiceRecord{
 		AssetID:         assetID,
 		ServiceType:     "service",
 		ServiceDate:     date("2025-11-15"),
@@ -167,13 +173,13 @@ func ensureLaptopService(ctx context.Context, store *postgres.Store, assetID, us
 	return err
 }
 
-func ensureVehicleRecords(ctx context.Context, store *postgres.Store, assetID, userID int64) error {
+func ensureVehicleRecords(ctx context.Context, db *postgres.DB, vehicles *postgres.VehicleRepository, assetID, userID int64) error {
 	var count int
-	if err := store.Pool().QueryRow(ctx, `SELECT count(*) FROM vehicle_insurance_records WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
+	if err := db.Pool().QueryRow(ctx, `SELECT count(*) FROM vehicle_insurance_records WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
 		return err
 	}
 	if count == 0 {
-		if _, err := store.CreateInsuranceRecord(ctx, domain.VehicleInsuranceRecord{
+		if _, err := vehicles.CreateInsuranceRecord(ctx, domain.VehicleInsuranceRecord{
 			AssetID:      assetID,
 			Provider:     "Demo Insurance",
 			PolicyNumber: "POL-123",
@@ -186,11 +192,11 @@ func ensureVehicleRecords(ctx context.Context, store *postgres.Store, assetID, u
 		}
 	}
 
-	if err := store.Pool().QueryRow(ctx, `SELECT count(*) FROM vehicle_license_records WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
+	if err := db.Pool().QueryRow(ctx, `SELECT count(*) FROM vehicle_license_records WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
 		return err
 	}
 	if count == 0 {
-		if _, err := store.CreateLicenseRecord(ctx, domain.VehicleLicenseRecord{
+		if _, err := vehicles.CreateLicenseRecord(ctx, domain.VehicleLicenseRecord{
 			AssetID:         assetID,
 			RenewalType:     "Annual license",
 			ReferenceNumber: "LIC-123",
@@ -203,11 +209,11 @@ func ensureVehicleRecords(ctx context.Context, store *postgres.Store, assetID, u
 		}
 	}
 
-	if err := store.Pool().QueryRow(ctx, `SELECT count(*) FROM vehicle_emission_records WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
+	if err := db.Pool().QueryRow(ctx, `SELECT count(*) FROM vehicle_emission_records WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
 		return err
 	}
 	if count == 0 {
-		if _, err := store.CreateEmissionRecord(ctx, domain.VehicleEmissionRecord{
+		if _, err := vehicles.CreateEmissionRecord(ctx, domain.VehicleEmissionRecord{
 			AssetID:         assetID,
 			InspectionType:  "Emission test",
 			ReferenceNumber: "EM-123",
@@ -220,11 +226,11 @@ func ensureVehicleRecords(ctx context.Context, store *postgres.Store, assetID, u
 		}
 	}
 
-	if err := store.Pool().QueryRow(ctx, `SELECT count(*) FROM service_records WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
+	if err := db.Pool().QueryRow(ctx, `SELECT count(*) FROM service_records WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
 		return err
 	}
 	if count == 0 {
-		if _, err := store.CreateServiceRecord(ctx, domain.ServiceRecord{
+		if _, err := vehicles.CreateServiceRecord(ctx, domain.ServiceRecord{
 			AssetID:            assetID,
 			ServiceType:        "service",
 			ServiceDate:        date("2026-01-10"),
@@ -240,11 +246,11 @@ func ensureVehicleRecords(ctx context.Context, store *postgres.Store, assetID, u
 		}
 	}
 
-	if err := store.Pool().QueryRow(ctx, `SELECT count(*) FROM fuel_logs WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
+	if err := db.Pool().QueryRow(ctx, `SELECT count(*) FROM fuel_logs WHERE asset_id = $1`, assetID).Scan(&count); err != nil {
 		return err
 	}
 	if count == 0 {
-		if _, err := store.CreateFuelLog(ctx, domain.FuelLog{
+		if _, err := vehicles.CreateFuelLog(ctx, domain.FuelLog{
 			AssetID:   assetID,
 			FuelDate:  date("2026-02-01"),
 			FuelType:  "Petrol",

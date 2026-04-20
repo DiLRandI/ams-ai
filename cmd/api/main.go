@@ -33,12 +33,12 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	store, err := postgres.New(ctx, cfg.DatabaseURL)
+	db, err := postgres.New(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Error("connect database", "error", err)
 		os.Exit(1)
 	}
-	defer store.Close()
+	defer db.Close()
 
 	objects, err := storage.NewMinIO(cfg.Storage)
 	if err != nil {
@@ -49,16 +49,23 @@ func main() {
 		log.Error("ensure storage bucket", "error", err)
 		os.Exit(1)
 	}
-	if err := store.RegenerateReminders(context.Background(), cfg.ReminderWindowDays); err != nil {
+	authRepo := postgres.NewAuthRepository(db)
+	assetRepo := postgres.NewAssetRepository(db, cfg.ReminderWindowDays)
+	categoryRepo := postgres.NewCategoryRepository(db)
+	vehicleRepo := postgres.NewVehicleRepository(db)
+	documentRepo := postgres.NewDocumentRepository(db)
+	reminderRepo := postgres.NewReminderRepository(db)
+
+	if err := reminderRepo.RegenerateReminders(context.Background(), cfg.ReminderWindowDays); err != nil {
 		log.Warn("reminder regeneration skipped", "error", err)
 	}
 
-	authSvc := auth.NewService(store, cfg.AuthSecret, cfg.TokenTTL, nil)
-	assetSvc := assets.NewService(store, cfg.ReminderWindowDays)
-	categorySvc := categories.NewService(store)
-	vehicleSvc := vehicles.NewService(store, assetSvc)
-	documentSvc := documents.NewService(store, assetSvc, objects, cfg.Storage.MaxUploadBytes, nil)
-	reminderSvc := reminders.NewService(store, cfg.ReminderWindowDays)
+	authSvc := auth.NewService(authRepo, cfg.AuthSecret, cfg.TokenTTL, nil)
+	assetSvc := assets.NewService(assetRepo, cfg.ReminderWindowDays)
+	categorySvc := categories.NewService(categoryRepo)
+	vehicleSvc := vehicles.NewService(vehicleRepo, assetSvc)
+	documentSvc := documents.NewService(documentRepo, assetSvc, objects, cfg.Storage.MaxUploadBytes, nil)
+	reminderSvc := reminders.NewService(reminderRepo, cfg.ReminderWindowDays)
 	reportSvc := reports.NewService(assetSvc, vehicleSvc)
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
