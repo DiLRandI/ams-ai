@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS reminders;
+DROP TABLE IF EXISTS fuel_logs;
+DROP TABLE IF EXISTS service_records;
+DROP TABLE IF EXISTS vehicle_emission_records;
+DROP TABLE IF EXISTS vehicle_license_records;
+DROP TABLE IF EXISTS vehicle_insurance_records;
+DROP TABLE IF EXISTS vehicle_profiles;
+DROP TABLE IF EXISTS asset_documents;
+DROP TABLE IF EXISTS assets;
+DROP TABLE IF EXISTS asset_categories;
+DROP TABLE IF EXISTS users;
