@@ -11,7 +11,7 @@ import (
 )
 
 func TestHealth(t *testing.T) {
-	handler := New(config.Config{}, nil, slog.New(slog.NewTextHandler(os.Stdout, nil)))
+	handler := New(config.Config{}, Dependencies{}, slog.New(slog.NewTextHandler(os.Stdout, nil)))
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	rec := httptest.NewRecorder()
 
@@ -23,7 +23,7 @@ func TestHealth(t *testing.T) {
 }
 
 func TestProtectedRouteRequiresBearerToken(t *testing.T) {
-	handler := New(config.Config{}, nil, slog.New(slog.NewTextHandler(os.Stdout, nil)))
+	handler := New(config.Config{}, Dependencies{}, slog.New(slog.NewTextHandler(os.Stdout, nil)))
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
 	rec := httptest.NewRecorder()
 

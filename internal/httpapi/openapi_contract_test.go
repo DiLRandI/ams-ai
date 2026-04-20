@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -31,17 +32,29 @@ func TestOpenAPIContractMatchesRouter(t *testing.T) {
 
 func implementedRoutes(t *testing.T) map[string]bool {
 	t.Helper()
-	source, err := os.ReadFile("server.go")
-	if err != nil {
-		t.Fatalf("read server.go: %v", err)
+	files := []string{
+		"router.go",
+		"../assets/http.go",
+		"../auth/http.go",
+		"../categories/http.go",
+		"../documents/http.go",
+		"../reminders/http.go",
+		"../reports/http.go",
+		"../vehicles/http.go",
 	}
-	matches := regexp.MustCompile(`mux\.HandleFunc\("([A-Z]+) ([^"]+)"`).FindAllSubmatch(source, -1)
-	if len(matches) == 0 {
-		t.Fatal("no backend routes found in server.go")
+	routes := make(map[string]bool)
+	pattern := regexp.MustCompile(`mux\.HandleFunc\("([A-Z]+) ([^"]+)"`)
+	for _, file := range files {
+		source, err := os.ReadFile(filepath.Clean(file))
+		if err != nil {
+			t.Fatalf("read %s: %v", file, err)
+		}
+		for _, match := range pattern.FindAllSubmatch(source, -1) {
+			routes[string(match[1])+" "+string(match[2])] = true
+		}
 	}
-	routes := make(map[string]bool, len(matches))
-	for _, match := range matches {
-		routes[string(match[1])+" "+string(match[2])] = true
+	if len(routes) == 0 {
+		t.Fatal("no backend routes found")
 	}
 	return routes
 }

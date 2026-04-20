@@ -10,11 +10,17 @@ import (
 	"syscall"
 	"time"
 
+	"ams-ai/internal/assets"
+	"ams-ai/internal/auth"
+	"ams-ai/internal/categories"
 	"ams-ai/internal/config"
+	"ams-ai/internal/documents"
 	"ams-ai/internal/httpapi"
 	"ams-ai/internal/platform/postgres"
 	"ams-ai/internal/platform/storage"
-	"ams-ai/internal/service"
+	"ams-ai/internal/reminders"
+	"ams-ai/internal/reports"
+	"ams-ai/internal/vehicles"
 )
 
 func main() {
@@ -47,10 +53,16 @@ func main() {
 		log.Warn("reminder regeneration skipped", "error", err)
 	}
 
-	svc := service.New(store, objects, cfg)
+	authSvc := auth.NewService(store, cfg.AuthSecret, cfg.TokenTTL, nil)
+	assetSvc := assets.NewService(store, cfg.ReminderWindowDays)
+	categorySvc := categories.NewService(store)
+	vehicleSvc := vehicles.NewService(store, assetSvc)
+	documentSvc := documents.NewService(store, assetSvc, objects, cfg.Storage.MaxUploadBytes, nil)
+	reminderSvc := reminders.NewService(store, cfg.ReminderWindowDays)
+	reportSvc := reports.NewService(assetSvc, vehicleSvc)
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpapi.New(cfg, svc, log),
+		Handler:           httpapi.New(cfg, httpapi.Dependencies{Auth: authSvc, Categories: categorySvc, Assets: assetSvc, Vehicles: vehicleSvc, Documents: documentSvc, Reminders: reminderSvc, Reports: reportSvc}, log),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      90 * time.Second,

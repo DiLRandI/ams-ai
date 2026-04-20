@@ -15,14 +15,8 @@ import (
 type ObjectStorage interface {
 	EnsureBucket(ctx context.Context) error
 	Put(ctx context.Context, key string, content io.Reader, size int64, contentType string) error
-	Get(ctx context.Context, key string) (io.ReadCloser, ObjectInfo, error)
+	Get(ctx context.Context, key string) (io.ReadCloser, string, int64, error)
 	Delete(ctx context.Context, key string) error
-}
-
-type ObjectInfo struct {
-	Key         string
-	ContentType string
-	Size        int64
 }
 
 type MinIOStorage struct {
@@ -66,17 +60,17 @@ func (s *MinIOStorage) Put(ctx context.Context, key string, content io.Reader, s
 	return nil
 }
 
-func (s *MinIOStorage) Get(ctx context.Context, key string) (io.ReadCloser, ObjectInfo, error) {
+func (s *MinIOStorage) Get(ctx context.Context, key string) (io.ReadCloser, string, int64, error) {
 	obj, err := s.client.GetObject(ctx, s.bucket, key, minio.GetObjectOptions{})
 	if err != nil {
-		return nil, ObjectInfo{}, fmt.Errorf("get object: %w", err)
+		return nil, "", 0, fmt.Errorf("get object: %w", err)
 	}
 	stat, err := obj.Stat()
 	if err != nil {
 		_ = obj.Close()
-		return nil, ObjectInfo{}, fmt.Errorf("stat object: %w", err)
+		return nil, "", 0, fmt.Errorf("stat object: %w", err)
 	}
-	return obj, ObjectInfo{Key: key, ContentType: stat.ContentType, Size: stat.Size}, nil
+	return obj, stat.ContentType, stat.Size, nil
 }
 
 func (s *MinIOStorage) Delete(ctx context.Context, key string) error {
