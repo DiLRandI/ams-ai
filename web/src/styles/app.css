@@ -183,14 +183,36 @@ h2 {
   gap: 0.45rem;
 }
 
+.navGroupToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.65rem;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 0.75rem;
+  background: transparent;
+  color: #dfeae5;
+  cursor: pointer;
+  text-align: left;
+}
+
+.navGroupToggle:hover {
+  background: #20352f;
+  color: #fff;
+}
+
+.navGroupToggle svg:last-child {
+  flex: 0 0 auto;
+  color: inherit;
+}
+
 .navGroupLabel {
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
-  min-height: 2.65rem;
-  border-radius: 8px;
-  padding: 0 0.75rem;
-  color: #dfeae5;
   font-weight: 650;
 }
 
@@ -629,6 +651,10 @@ h2 {
   }
 
   .navGroup {
+    grid-column: 1 / -1;
+  }
+
+  .navGroupToggle {
     grid-column: 1 / -1;
   }
 
