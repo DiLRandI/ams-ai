@@ -6,6 +6,8 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  FolderCog,
+  Boxes,
 } from "lucide-react";
 import { useAuth } from "../features/auth/AuthContext";
 
@@ -27,9 +29,19 @@ export function AppLayout() {
           <NavLink to="/dashboard">
             <LayoutDashboard size={18} /> Dashboard
           </NavLink>
-          <NavLink to="/assets">
-            <Package size={18} /> Assets
-          </NavLink>
+          <div className="navGroup">
+            <span className="navGroupLabel">
+              <Package size={18} /> Assets
+            </span>
+            <div className="navSubgroup">
+              <NavLink to="/assets" end>
+                <Boxes size={16} /> Asset list
+              </NavLink>
+              <NavLink to="/assets/categories">
+                <FolderCog size={16} /> Categories
+              </NavLink>
+            </div>
+          </div>
           <NavLink to="/reminders">
             <Bell size={18} /> Reminders
           </NavLink>

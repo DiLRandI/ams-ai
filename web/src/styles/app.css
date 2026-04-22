@@ -178,6 +178,36 @@ h2 {
   gap: 0.35rem;
 }
 
+.navGroup {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.navGroupLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.65rem;
+  border-radius: 8px;
+  padding: 0 0.75rem;
+  color: #dfeae5;
+  font-weight: 650;
+}
+
+.navSubgroup {
+  display: grid;
+  gap: 0.25rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid #29453d;
+}
+
+.navSubgroup a {
+  gap: 0.55rem;
+  min-height: 2.35rem;
+  padding-left: 0.65rem;
+  font-size: 0.94rem;
+}
+
 .nav a {
   gap: 0.65rem;
   min-height: 2.65rem;
@@ -598,6 +628,10 @@ h2 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  .navGroup {
+    grid-column: 1 / -1;
+  }
+
   .main {
     padding: 1rem;
   }
@@ -623,6 +657,11 @@ h2 {
 
   .nav {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .navSubgroup {
+    padding-left: 0;
+    border-left: 0;
   }
 
   .headerActions,
