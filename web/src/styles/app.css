@@ -383,6 +383,14 @@ h2 {
   color: var(--danger);
 }
 
+.success {
+  border: 1px solid #a6d9bd;
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: #eefaf2;
+  color: var(--success);
+}
+
 .fieldError {
   color: var(--danger);
   font-size: 0.8rem;
@@ -583,6 +591,12 @@ h2 {
 .documentCard div {
   display: flex;
   gap: 0.5rem;
+}
+
+.replaceRow {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
 }
 
 .uploadRow,

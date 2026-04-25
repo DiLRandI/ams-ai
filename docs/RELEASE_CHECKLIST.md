@@ -40,7 +40,7 @@ Use this checklist for an internal MVP release verification from a fresh clone.
   - `make migrate-up`
 - For a fresh DB verification, remove compose volumes first:
   - `make down`
-  - `docker volume rm ams-ai_postgres-data ams-ai_minio-data`
+  - `docker volume rm ams-ai_postgres18-data ams-ai_minio-data`
   - `docker compose up -d postgres minio`
   - `make migrate-up`
 

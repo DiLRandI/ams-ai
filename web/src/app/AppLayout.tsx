@@ -11,6 +11,7 @@ import {
   Package,
   FolderCog,
   Boxes,
+  UserCircle,
 } from "lucide-react";
 import { useAuth } from "../features/auth/AuthContext";
 
@@ -75,6 +76,9 @@ export function AppLayout() {
           </NavLink>
           <NavLink to="/reports">
             <FileDown size={18} /> Reports
+          </NavLink>
+          <NavLink to="/profile">
+            <UserCircle size={18} /> Profile
           </NavLink>
         </nav>
         <div className="userPanel">

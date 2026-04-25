@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"ams-ai/internal/domain"
@@ -76,4 +78,24 @@ func (s *Service) ListUsers(ctx context.Context, user domain.User) ([]domain.Use
 		return []domain.User{user}, nil
 	}
 	return s.repo.ListUsers(ctx)
+}
+
+func (s *Service) UpdateProfile(ctx context.Context, user domain.User, fullName, password string) (domain.User, error) {
+	fullName = strings.TrimSpace(fullName)
+	if fullName == "" {
+		return domain.User{}, fmt.Errorf("%w: full name is required", domain.ErrInvalid)
+	}
+	var passwordHash *string
+	if password != "" {
+		if len(password) < 6 {
+			return domain.User{}, fmt.Errorf("%w: password must be at least 6 characters", domain.ErrInvalid)
+		}
+		hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return domain.User{}, err
+		}
+		hashed := string(hash)
+		passwordHash = &hashed
+	}
+	return s.repo.UpdateUserProfile(ctx, user.ID, fullName, passwordHash)
 }

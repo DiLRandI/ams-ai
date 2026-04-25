@@ -115,7 +115,7 @@ Fresh local database reset:
 
 ```sh
 make down
-docker volume rm ams-ai_postgres-data ams-ai_minio-data
+docker volume rm ams-ai_postgres18-data ams-ai_minio-data
 docker compose up -d postgres minio
 make migrate-up
 make seed

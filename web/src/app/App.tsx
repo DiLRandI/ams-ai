@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./AppLayout";
 import { LoginPage } from "../features/auth/LoginPage";
+import { ProfilePage } from "../features/auth/ProfilePage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { AssetDetailPage } from "../features/assets/AssetDetailPage";
 import { AssetFormPage } from "../features/assets/AssetFormPage";
@@ -25,6 +26,7 @@ export function App() {
           <Route path="/assets/:id/edit" element={<AssetFormPage />} />
           <Route path="/reminders" element={<RemindersPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

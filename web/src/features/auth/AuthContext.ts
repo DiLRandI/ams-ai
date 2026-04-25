@@ -5,6 +5,7 @@ export interface AuthContextValue {
   user: User | null;
   bootstrapped: boolean;
   login(email: string, password: string): Promise<void>;
+  updateProfile(fullName: string, password?: string): Promise<void>;
   logout(): void;
 }
 

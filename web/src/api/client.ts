@@ -78,6 +78,12 @@ export const api = {
   me() {
     return request<User>("/api/auth/me");
   },
+  updateProfile(payload: { fullName: string; password?: string }) {
+    return request<User>("/api/auth/me", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
   users() {
     return request<User[]>("/api/users");
   },
@@ -127,6 +133,12 @@ export const api = {
   uploadDocument(assetId: number, form: FormData) {
     return request<AssetDocument>(`/api/assets/${assetId}/documents`, {
       method: "POST",
+      body: form,
+    });
+  },
+  replaceDocument(id: number, form: FormData) {
+    return request<AssetDocument>(`/api/documents/${id}`, {
+      method: "PUT",
       body: form,
     });
   },

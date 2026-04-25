@@ -58,6 +58,19 @@ func (r *AuthRepository) ListUsers(ctx context.Context) ([]domain.User, error) {
 	return users, rows.Err()
 }
 
+func (r *AuthRepository) UpdateUserProfile(ctx context.Context, id int64, fullName string, passwordHash *string) (domain.User, error) {
+	query := `
+		UPDATE users
+		SET full_name = $2,
+			password_hash = COALESCE($3, password_hash),
+			updated_at = now()
+		WHERE id = $1
+		RETURNING id, email, password_hash, full_name, role, created_at, updated_at
+	`
+	row := r.db.pool.QueryRow(ctx, query, id, fullName, passwordHash)
+	return scanUser(row)
+}
+
 func (r *AuthRepository) UpsertSeedUser(ctx context.Context, email, password, fullName, role string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {

@@ -13,11 +13,17 @@ export function AssetsPage() {
   const [q, setQ] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState("");
+  const [location, setLocation] = useState("");
+  const [assignedUserId, setAssignedUserId] = useState("");
   const [warrantyState, setWarrantyState] = useState("");
   const [hasDocuments, setHasDocuments] = useState("");
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: api.categories,
+  });
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: api.users,
   });
 
   const params = useMemo(() => {
@@ -25,10 +31,20 @@ export function AssetsPage() {
     if (q) next.set("q", q);
     if (categoryId) next.set("categoryId", categoryId);
     if (status) next.set("status", status);
+    if (location) next.set("location", location);
+    if (assignedUserId) next.set("assignedUserId", assignedUserId);
     if (warrantyState) next.set("warrantyState", warrantyState);
     if (hasDocuments) next.set("hasDocuments", hasDocuments);
     return next;
-  }, [categoryId, hasDocuments, q, status, warrantyState]);
+  }, [
+    assignedUserId,
+    categoryId,
+    hasDocuments,
+    location,
+    q,
+    status,
+    warrantyState,
+  ]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["assets", params.toString()],
@@ -78,6 +94,24 @@ export function AssetsPage() {
           <option value="stored">Stored</option>
           <option value="retired">Retired</option>
           <option value="disposed">Disposed</option>
+        </select>
+        <input
+          aria-label="Location"
+          placeholder="Filter by location"
+          value={location}
+          onChange={(event) => setLocation(event.target.value)}
+        />
+        <select
+          value={assignedUserId}
+          onChange={(event) => setAssignedUserId(event.target.value)}
+          aria-label="Assigned user"
+        >
+          <option value="">Any assigned user</option>
+          {users.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.fullName}
+            </option>
+          ))}
         </select>
         <select
           value={warrantyState}
