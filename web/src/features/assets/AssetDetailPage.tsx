@@ -188,6 +188,19 @@ function DocumentSection({ assetId }: { assetId: number }) {
       await queryClient.invalidateQueries({ queryKey: ["asset", assetId] });
     },
   });
+  const replace = useMutation({
+    mutationFn: ({
+      documentId,
+      form,
+    }: {
+      documentId: number;
+      form: FormData;
+    }) => api.replaceDocument(documentId, form),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["documents", assetId] });
+      await queryClient.invalidateQueries({ queryKey: ["asset", assetId] });
+    },
+  });
   const remove = useMutation({
     mutationFn: (documentId: number) => api.deleteDocument(documentId),
     onSuccess: async () => {
@@ -234,6 +247,13 @@ function DocumentSection({ assetId }: { assetId: number }) {
             : "Upload failed"}
         </div>
       )}
+      {replace.error && (
+        <div className="alert">
+          {replace.error instanceof Error
+            ? replace.error.message
+            : "Replace failed"}
+        </div>
+      )}
       {data.length === 0 ? (
         <EmptyState title="No documents attached" />
       ) : (
@@ -243,6 +263,8 @@ function DocumentSection({ assetId }: { assetId: number }) {
               key={doc.id}
               doc={doc}
               onDelete={() => remove.mutate(doc.id)}
+              onReplace={(form) => replace.mutate({ documentId: doc.id, form })}
+              replacing={replace.isPending}
             />
           ))}
         </div>
@@ -254,9 +276,13 @@ function DocumentSection({ assetId }: { assetId: number }) {
 function DocumentCard({
   doc,
   onDelete,
+  onReplace,
+  replacing,
 }: {
   doc: AssetDocument;
   onDelete(): void;
+  onReplace(form: FormData): void;
+  replacing: boolean;
 }) {
   async function download() {
     const response = await fetch(api.downloadURL(doc.id), {
@@ -269,6 +295,12 @@ function DocumentCard({
     anchor.download = doc.fileName;
     anchor.click();
     URL.revokeObjectURL(url);
+  }
+
+  function replace(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onReplace(new FormData(event.currentTarget));
+    event.currentTarget.reset();
   }
 
   return (
@@ -296,6 +328,21 @@ function DocumentCard({
           <Trash2 size={16} />
         </button>
       </div>
+      <form className="replaceRow" onSubmit={replace}>
+        <input name="title" type="hidden" defaultValue={doc.title} />
+        <input name="type" type="hidden" defaultValue={doc.type} />
+        <input name="notes" type="hidden" defaultValue={doc.notes} />
+        <input
+          aria-label={`Replacement file for ${doc.title}`}
+          name="file"
+          type="file"
+          accept=".jpg,.jpeg,.png,.pdf"
+          required
+        />
+        <button className="secondaryButton" disabled={replacing} type="submit">
+          Replace file
+        </button>
+      </form>
     </article>
   );
 }
@@ -508,6 +555,10 @@ function RenewalSection({
       return api.emissions(assetId);
     },
   });
+  const { data: documents = [] } = useQuery({
+    queryKey: ["documents", assetId],
+    queryFn: () => api.documents(assetId),
+  });
   const mutation = useMutation<RenewalRecord, Error, Record<string, unknown>>({
     mutationFn: (payload: Record<string, unknown>) => {
       if (kind === "insurance") return api.createInsurance(assetId, payload);
@@ -531,6 +582,7 @@ function RenewalSection({
         cost: numberOrUndefined(values.cost),
         startDate: values.issueDate,
         expiryDate: values.expiryDate,
+        documentId: intOrUndefined(values.documentId),
         notes: values.notes,
       });
     } else if (kind === "license") {
@@ -540,6 +592,7 @@ function RenewalSection({
         cost: numberOrUndefined(values.cost),
         issueDate: values.issueDate,
         expiryDate: values.expiryDate,
+        documentId: intOrUndefined(values.documentId),
         notes: values.notes,
       });
     } else {
@@ -549,6 +602,7 @@ function RenewalSection({
         cost: numberOrUndefined(values.cost),
         issueDate: values.issueDate,
         expiryDate: values.expiryDate,
+        documentId: intOrUndefined(values.documentId),
         notes: values.notes,
       });
     }
@@ -567,13 +621,21 @@ function RenewalSection({
         <input name="cost" type="number" step="0.01" placeholder="Cost" />
         <input name="issueDate" type="date" />
         <input name="expiryDate" type="date" required />
+        <select name="documentId" defaultValue="">
+          <option value="">No linked document</option>
+          {documents.map((doc) => (
+            <option key={doc.id} value={doc.id}>
+              {doc.title} ({doc.type})
+            </option>
+          ))}
+        </select>
         <input name="notes" placeholder="Notes" />
         <button className="primaryButton" type="submit">
           Add
         </button>
       </form>
       <RecordTable
-        headers={["Expiry", "Name", "Reference", "Cost"]}
+        headers={["Expiry", "Name", "Reference", "Cost", "Document"]}
         rows={data.map((item) => [
           dateOnly(item.expiryDate),
           "provider" in item
@@ -583,6 +645,7 @@ function RenewalSection({
               : item.inspectionType,
           "policyNumber" in item ? item.policyNumber : item.referenceNumber,
           money(item.cost),
+          documentTitle(documents, item.documentId),
         ])}
         empty={`No ${kind} records`}
       />
@@ -707,6 +770,11 @@ function numberOrUndefined(value: string) {
 
 function intOrUndefined(value: string) {
   return value ? Number.parseInt(value, 10) : undefined;
+}
+
+function documentTitle(documents: AssetDocument[], id?: number) {
+  if (!id) return "";
+  return documents.find((doc) => doc.id === id)?.title ?? `Document #${id}`;
 }
 
 function kindTitle(kind: "insurance" | "license" | "emission") {

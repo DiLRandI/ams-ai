@@ -19,6 +19,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("ams_user", JSON.stringify(response.user));
         setUser(response.user);
       },
+      async updateProfile(fullName: string, password?: string) {
+        const updated = await api.updateProfile({ fullName, password });
+        localStorage.setItem("ams_user", JSON.stringify(updated));
+        setUser(updated);
+      },
       logout() {
         setToken(null);
         localStorage.removeItem("ams_user");

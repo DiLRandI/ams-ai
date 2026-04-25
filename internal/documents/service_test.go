@@ -12,8 +12,9 @@ import (
 )
 
 type fakeDocumentRepo struct {
-	createErr error
-	doc       domain.AssetDocument
+	createErr  error
+	replaceErr error
+	doc        domain.AssetDocument
 }
 
 func (r *fakeDocumentRepo) CreateDocument(ctx context.Context, document domain.AssetDocument) (domain.AssetDocument, error) {
@@ -31,6 +32,15 @@ func (r *fakeDocumentRepo) GetDocument(ctx context.Context, id int64) (domain.As
 
 func (r *fakeDocumentRepo) ListDocuments(ctx context.Context, assetID int64) ([]domain.AssetDocument, error) {
 	return []domain.AssetDocument{r.doc}, nil
+}
+
+func (r *fakeDocumentRepo) ReplaceDocument(ctx context.Context, id int64, document domain.AssetDocument) (domain.AssetDocument, error) {
+	r.doc = document
+	if r.replaceErr != nil {
+		return domain.AssetDocument{}, r.replaceErr
+	}
+	document.ID = id
+	return document, nil
 }
 
 func (r *fakeDocumentRepo) DeleteDocument(ctx context.Context, id int64) error {
@@ -103,5 +113,44 @@ func TestUploadDocumentDeletesObjectWhenRepositoryFails(t *testing.T) {
 	}
 	if repo.doc.FileName != "warranty_final.pdf" {
 		t.Fatalf("document filename = %q, want sanitized filename", repo.doc.FileName)
+	}
+}
+
+func TestReplaceDocumentSwapsObjectAndKeepsMetadataDefaults(t *testing.T) {
+	repo := &fakeDocumentRepo{doc: domain.AssetDocument{
+		ID:        5,
+		AssetID:   9,
+		Title:     "Current invoice",
+		Type:      "bill_invoice",
+		Notes:     "Keep this note",
+		ObjectKey: "assets/9/documents/old/invoice.pdf",
+	}}
+	objects := &fakeObjects{}
+	service := NewService(repo, fakeAssetReader{}, objects, 1024, fixedClock{t: time.Unix(200, 0)})
+
+	replaced, err := service.ReplaceDocument(context.Background(), 5, UploadInput{
+		FileName:    "replacement invoice.pdf",
+		ContentType: "application/pdf",
+		SizeBytes:   10,
+		Reader:      strings.NewReader("0123456789"),
+		User:        domain.User{ID: 3, Role: domain.RoleUser},
+	})
+	if err != nil {
+		t.Fatalf("ReplaceDocument() error = %v", err)
+	}
+	if replaced.Title != "Current invoice" {
+		t.Fatalf("title = %q, want existing title fallback", replaced.Title)
+	}
+	if replaced.Type != "bill_invoice" {
+		t.Fatalf("type = %q, want existing type fallback", replaced.Type)
+	}
+	if repo.doc.FileName != "replacement_invoice.pdf" {
+		t.Fatalf("filename = %q, want sanitized replacement filename", repo.doc.FileName)
+	}
+	if objects.putKey == "" || repo.doc.ObjectKey != objects.putKey {
+		t.Fatalf("replacement object key was not stored on document")
+	}
+	if objects.deleted != "assets/9/documents/old/invoice.pdf" {
+		t.Fatalf("deleted key = %q, want old object key", objects.deleted)
 	}
 }

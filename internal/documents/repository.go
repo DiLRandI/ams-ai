@@ -10,6 +10,7 @@ type Repository interface {
 	CreateDocument(ctx context.Context, document domain.AssetDocument) (domain.AssetDocument, error)
 	GetDocument(ctx context.Context, id int64) (domain.AssetDocument, error)
 	ListDocuments(ctx context.Context, assetID int64) ([]domain.AssetDocument, error)
+	ReplaceDocument(ctx context.Context, id int64, document domain.AssetDocument) (domain.AssetDocument, error)
 	DeleteDocument(ctx context.Context, id int64) error
 }
 

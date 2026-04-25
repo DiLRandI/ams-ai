@@ -37,6 +37,23 @@ paths:
       responses:
         "200":
           description: Current user
+    put:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fullName]
+              properties:
+                fullName:
+                  type: string
+                password:
+                  type: string
+                  description: Optional replacement password. Omit or leave blank to keep the current password.
+      responses:
+        "200":
+          description: Updated current user profile
   /api/users:
     get:
       responses:
@@ -157,6 +174,29 @@ paths:
         "200":
           description: Document file stream
   /api/documents/{id}:
+    put:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      description: Replaces an existing private asset document file while preserving document access controls. Files must be JPG, PNG, or PDF and must not exceed the configured MAX_UPLOAD_BYTES limit, 20 MB by default.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                title: { type: string }
+                type:
+                  type: string
+                  enum: [bill_invoice, warranty, insurance, license_registration, service_receipt, manual, other]
+                notes: { type: string }
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Replaced document
     delete:
       parameters:
         - $ref: "#/components/parameters/id"

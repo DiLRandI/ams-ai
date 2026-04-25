@@ -16,7 +16,7 @@ test("core MVP happy path", async ({ page, request }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 
-  await page.getByRole("link", { name: /Assets/ }).click();
+  await page.getByRole("link", { name: "Asset list" }).click();
   await page.getByRole("link", { name: "Add asset" }).click();
   const categorySelect = page.locator('select[name="categoryId"]');
   await expect(categorySelect).toContainText("IT devices");
@@ -73,7 +73,7 @@ test("core MVP happy path", async ({ page, request }) => {
   expect(authorized.status()).toBe(200);
   expect(authorized.headers()["content-type"]).toContain("application/pdf");
 
-  await page.getByRole("link", { name: /Assets/ }).click();
+  await page.getByRole("link", { name: "Asset list" }).click();
   await page.getByPlaceholder(/Search name/).fill(assetName);
   await page.getByLabel("Warranty state").selectOption("expiring_soon");
   await page.getByLabel("Documents").selectOption("true");

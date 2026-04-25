@@ -178,6 +178,58 @@ h2 {
   gap: 0.35rem;
 }
 
+.navGroup {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.navGroupToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.65rem;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 0.75rem;
+  background: transparent;
+  color: #dfeae5;
+  cursor: pointer;
+  text-align: left;
+}
+
+.navGroupToggle:hover {
+  background: #20352f;
+  color: #fff;
+}
+
+.navGroupToggle svg:last-child {
+  flex: 0 0 auto;
+  color: inherit;
+}
+
+.navGroupLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-weight: 650;
+}
+
+.navSubgroup {
+  display: grid;
+  gap: 0.25rem;
+  padding-left: 0.75rem;
+  border-left: 1px solid #29453d;
+}
+
+.navSubgroup a {
+  gap: 0.55rem;
+  min-height: 2.35rem;
+  padding-left: 0.65rem;
+  font-size: 0.94rem;
+}
+
 .nav a {
   gap: 0.65rem;
   min-height: 2.65rem;
@@ -329,6 +381,14 @@ h2 {
   padding: 0.85rem;
   background: #fff1f0;
   color: var(--danger);
+}
+
+.success {
+  border: 1px solid #a6d9bd;
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: #eefaf2;
+  color: var(--success);
 }
 
 .fieldError {
@@ -533,6 +593,12 @@ h2 {
   gap: 0.5rem;
 }
 
+.replaceRow {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
 .uploadRow,
 .recordForm {
   display: grid;
@@ -598,6 +664,14 @@ h2 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  .navGroup {
+    grid-column: 1 / -1;
+  }
+
+  .navGroupToggle {
+    grid-column: 1 / -1;
+  }
+
   .main {
     padding: 1rem;
   }
@@ -623,6 +697,11 @@ h2 {
 
   .nav {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .navSubgroup {
+    padding-left: 0;
+    border-left: 0;
   }
 
   .headerActions,

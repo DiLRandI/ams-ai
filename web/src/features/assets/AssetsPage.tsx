@@ -1,25 +1,29 @@
 import { Link } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { api } from "../../api/client";
 import { PageHeader } from "../../components/PageHeader";
 import { EmptyState } from "../../components/EmptyState";
 import { Loading } from "../../components/Loading";
 import { StatusBadge, WarrantyBadge } from "../../components/StateBadge";
 import { dateOnly } from "./format";
-import { useAuth } from "../auth/AuthContext";
 
 export function AssetsPage() {
   const [q, setQ] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [status, setStatus] = useState("");
+  const [location, setLocation] = useState("");
+  const [assignedUserId, setAssignedUserId] = useState("");
   const [warrantyState, setWarrantyState] = useState("");
   const [hasDocuments, setHasDocuments] = useState("");
-  const { user } = useAuth();
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: api.categories,
+  });
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: api.users,
   });
 
   const params = useMemo(() => {
@@ -27,10 +31,20 @@ export function AssetsPage() {
     if (q) next.set("q", q);
     if (categoryId) next.set("categoryId", categoryId);
     if (status) next.set("status", status);
+    if (location) next.set("location", location);
+    if (assignedUserId) next.set("assignedUserId", assignedUserId);
     if (warrantyState) next.set("warrantyState", warrantyState);
     if (hasDocuments) next.set("hasDocuments", hasDocuments);
     return next;
-  }, [categoryId, hasDocuments, q, status, warrantyState]);
+  }, [
+    assignedUserId,
+    categoryId,
+    hasDocuments,
+    location,
+    q,
+    status,
+    warrantyState,
+  ]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["assets", params.toString()],
@@ -80,6 +94,24 @@ export function AssetsPage() {
           <option value="stored">Stored</option>
           <option value="retired">Retired</option>
           <option value="disposed">Disposed</option>
+        </select>
+        <input
+          aria-label="Location"
+          placeholder="Filter by location"
+          value={location}
+          onChange={(event) => setLocation(event.target.value)}
+        />
+        <select
+          value={assignedUserId}
+          onChange={(event) => setAssignedUserId(event.target.value)}
+          aria-label="Assigned user"
+        >
+          <option value="">Any assigned user</option>
+          {users.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.fullName}
+            </option>
+          ))}
         </select>
         <select
           value={warrantyState}
@@ -166,72 +198,6 @@ export function AssetsPage() {
           </div>
         )}
       </section>
-      {user?.role === "admin" && <CategoryManager />}
     </>
-  );
-}
-
-function CategoryManager() {
-  const queryClient = useQueryClient();
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories"],
-    queryFn: api.categories,
-  });
-  const create = useMutation({
-    mutationFn: (payload: { name: string; description: string }) =>
-      api.createCategory(payload),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["categories"] }),
-  });
-  const update = useMutation({
-    mutationFn: (payload: { id: number; name: string; description: string }) =>
-      api.updateCategory(payload.id, payload),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["categories"] }),
-  });
-
-  function createCategory(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    create.mutate({
-      name: String(form.get("name") ?? ""),
-      description: String(form.get("description") ?? ""),
-    });
-    event.currentTarget.reset();
-  }
-
-  return (
-    <section className="panel">
-      <h2>Category settings</h2>
-      <form className="recordForm single" onSubmit={createCategory}>
-        <input name="name" placeholder="New category name" required />
-        <input name="description" placeholder="Description" />
-        <button className="primaryButton" type="submit">
-          Add category
-        </button>
-      </form>
-      <div className="categoryEditor">
-        {categories.map((category) => (
-          <form
-            key={category.id}
-            onSubmit={(event) => {
-              event.preventDefault();
-              const form = new FormData(event.currentTarget);
-              update.mutate({
-                id: category.id,
-                name: String(form.get("name") ?? ""),
-                description: String(form.get("description") ?? ""),
-              });
-            }}
-          >
-            <input name="name" defaultValue={category.name} />
-            <input name="description" defaultValue={category.description} />
-            <button className="secondaryButton" type="submit">
-              Save
-            </button>
-          </form>
-        ))}
-      </div>
-    </section>
   );
 }
